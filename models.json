@@ -1,0 +1,5 @@
+{
+  "models": [
+    { "id": "muse-glimmer-30b",     "target": "muse-glimmer-30b",     "backend": "huggingface" }
+  ]
+}

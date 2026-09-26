@@ -1,14 +1,20 @@
-import json, time
+import json, time, os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 class RequestHandler(BaseHTTPRequestHandler):
+    def load_catalog(self):
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models.json")
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)["models"]
     def do_GET(self):
         path = self.path.split("?")[0].rstrip("/") or "/"
+        catalog = self.load_catalog()
         if path == "/v1/models":
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({"object": "list", "data": [{"id": "stub-chat", "object": "model"}]}).encode())
+            data = [{"id": m["id"], "object": "model"} for m in catalog]
+            self.wfile.write(json.dumps({"object": "list", "data": data}).encode())
         else:
             self.send_response(404)
             self.send_header('Content-Type', 'application/json')
@@ -62,7 +68,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps({
             "id": "chatcmpl-stub-1", "object": "chat.completion",
-            "created": int(time.time()), "model": "stub-chat",
+            "created": int(time.time()), "model": body.get("model", "stub-chat"),
             "choices": [{"index": 0, "message": reply, "finish_reason": finish}],
             "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
         }).encode())
